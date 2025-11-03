@@ -47,7 +47,7 @@ export default function EfficiencyChart() {
           padding: 20,
           font: {
             size: 12,
-            weight: '500',
+            weight: 'bold' as const,
           },
         },
       },
@@ -73,8 +73,8 @@ export default function EfficiencyChart() {
       const { width, height, ctx } = chart
       ctx.restore()
       
-      const fontSize = (height / 114).toFixed(2)
-      ctx.font = `bold ${fontSize}em sans-serif`
+      const fontSize = height / 114
+      ctx.font = `bold ${fontSize.toFixed(2)}em sans-serif`
       ctx.textBaseline = 'middle'
       ctx.fillStyle = '#1F2937'
       
@@ -84,7 +84,7 @@ export default function EfficiencyChart() {
       
       ctx.fillText(text, textX, textY)
       
-      ctx.font = `${fontSize * 0.6}em sans-serif`
+      ctx.font = `${(fontSize * 0.6).toFixed(2)}em sans-serif`
       ctx.fillStyle = '#6B7280'
       const subText = 'Efficiency'
       const subTextX = Math.round((width - ctx.measureText(subText).width) / 2)
