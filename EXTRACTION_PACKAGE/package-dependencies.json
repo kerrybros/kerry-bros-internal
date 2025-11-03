@@ -1,0 +1,35 @@
+{
+  "description": "Add these dependencies to your package.json",
+  "note": "This is NOT a package.json file. Copy the values below into your existing package.json",
+  
+  "dependencies": {
+    "react": "^18.2.0 or higher",
+    "react-dom": "^18.2.0 or higher"
+  },
+  
+  "devDependencies": {
+    "tailwindcss": "^3.4.0 or higher",
+    "autoprefixer": "^10.4.0 or higher",
+    "postcss": "^8.4.0 or higher",
+    "@types/react": "^18.0.0 (if using TypeScript)",
+    "@types/react-dom": "^18.0.0 (if using TypeScript)",
+    "typescript": "^5.0.0 (if using TypeScript)"
+  },
+  
+  "peerDependencies_note": "If you're using React Router (recommended for multi-page apps)",
+  "peerDependencies": {
+    "react-router-dom": "^6.0.0 (optional, for routing)"
+  },
+  
+  "scripts_to_add": {
+    "build:css": "tailwindcss -i ./src/index.css -o ./dist/output.css",
+    "watch:css": "tailwindcss -i ./src/index.css -o ./dist/output.css --watch"
+  },
+  
+  "installation_commands": [
+    "npm install react react-dom",
+    "npm install -D tailwindcss autoprefixer postcss",
+    "npx tailwindcss init -p"
+  ]
+}
+
