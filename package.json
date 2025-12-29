@@ -9,9 +9,8 @@
     "dev": "npm run dev --workspace=packages/web & npm run dev --workspace=packages/server",
     "dev:web": "npm run dev --workspace=packages/web",
     "dev:server": "npm run dev --workspace=packages/server",
-    "build": "npm run build --workspace=packages/web && npm run build --workspace=packages/server",
+    "build": "npm run build --workspace=packages/web",
     "build:web": "npm run build --workspace=packages/web",
-    "build:server": "npm run build --workspace=packages/server",
     "prisma:generate": "npm run prisma:generate --workspace=packages/server",
     "prisma:migrate": "npm run prisma:migrate --workspace=packages/server",
     "prisma:studio": "npm run prisma:studio --workspace=packages/server"
