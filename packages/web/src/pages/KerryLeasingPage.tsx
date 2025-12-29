@@ -1,8 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+interface Unit {
+  unitNumber: string;
+  spent: number;
+}
+
+interface Customer {
+  id: string;
+  customerName: string;
+  logoUrl: string;
+  currentSpend: number;
+  fixedCost: number;
+  units: Unit[];
+}
+
+interface ApiResponse {
+  customers: Customer[];
+  lastUpdated: string;
+  monthRange: {
+    start: string;
+    end: string;
+  };
+}
+
 // Mock data - structured exactly as API will return
-const mockCustomers = [
+const mockCustomers: Customer[] = [
   {
     id: '1',
     customerName: 'Wolverine Packing KL',
@@ -40,27 +63,45 @@ const mockCustomers = [
   }
 ];
 
-interface Unit {
-  unitNumber: string;
-  spent: number;
-}
-
-interface Customer {
-  id: string;
-  customerName: string;
-  logoUrl: string;
-  currentSpend: number;
-  fixedCost: number;
-  units: Unit[];
-}
+// Logo mapping (hardcoded for now)
+const LOGO_MAP: { [key: string]: string } = {
+  'Wolverine Packing KL': '/Wolverine Logo.jpg',
+  'Quality Meats KL': '/Quality Meats Logo.png',
+  'Royal Banana KL': '/Royal Banana Logo.png'
+};
 
 export default function KerryLeasingPage() {
   const navigate = useNavigate();
   const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
-  const [lastUpdated] = useState<Date>(new Date()); // In real app, this comes from API
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  // TODO: Replace with actual API call
-  const customers: Customer[] = mockCustomers;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/leasing/customer-spend');
+        const data: ApiResponse = await response.json();
+        
+        // Map logo URLs to correct paths
+        const customersWithLogos = data.customers.map(customer => ({
+          ...customer,
+          logoUrl: LOGO_MAP[customer.customerName] || customer.logoUrl
+        }));
+        
+        setCustomers(customersWithLogos);
+        setLastUpdated(new Date(data.lastUpdated));
+      } catch (error) {
+        console.error('Error fetching customer data:', error);
+        // Fallback to mock data on error
+        setCustomers(mockCustomers);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -134,9 +175,14 @@ export default function KerryLeasingPage() {
           </p>
         </div>
 
-        {/* Customer Cards */}
-        <div className="space-y-4">
-          {customers.map((customer) => {
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600">Loading customer data...</p>
+          </div>
+        ) : (
+          /* Customer Cards */
+          <div className="space-y-4">
+            {customers.map((customer) => {
             const remaining = calculateRemaining(customer.currentSpend, customer.fixedCost);
             const isExpanded = expandedCustomer === customer.id;
             const isOverBudget = remaining < 0;
@@ -222,6 +268,7 @@ export default function KerryLeasingPage() {
             );
           })}
         </div>
+        )}
       </div>
     </div>
   );

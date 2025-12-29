@@ -1,10 +1,13 @@
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface HomePageProps {
   onLogout: () => void;
 }
 
 export default function HomePage({ onLogout }: HomePageProps) {
+  const navigate = useNavigate();
+  
   // 30-minute timeout with activity reset
   useEffect(() => {
     let timeoutId: number;
@@ -35,9 +38,7 @@ export default function HomePage({ onLogout }: HomePageProps) {
   }, [onLogout]);
 
   const handleOpenPage = (path: string) => {
-    // Open in new tab with full URL
-    const fullUrl = window.location.origin + path;
-    window.open(fullUrl, '_blank');
+    navigate(path);
   };
 
   return (
@@ -62,7 +63,7 @@ export default function HomePage({ onLogout }: HomePageProps) {
             Select a Report
           </h2>
           <p className="mt-4 text-lg text-gray-600">
-            Click on any card below to open the report in a new tab
+            Click on any card below to view the report
           </p>
         </div>
 
@@ -90,7 +91,7 @@ export default function HomePage({ onLogout }: HomePageProps) {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  d="M9 5l7 7-7 7"
                 />
               </svg>
             </div>

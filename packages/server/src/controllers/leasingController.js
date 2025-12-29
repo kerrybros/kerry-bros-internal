@@ -1,81 +1,66 @@
-import prisma from '../prisma.js';
 import cache from '../cache.js';
+import { refreshCustomerSpendData } from '../services/dataRefreshService.js';
 
 // GET /api/leasing/customer-spend
 export const getCustomerSpend = async (req, res) => {
   try {
-    // Check cache first
+    // Always serve from cache - never trigger refresh from API requests
     const cached = cache.get('customer-spend');
+    
     if (cached) {
       console.log('📦 Serving from cache: customer-spend');
       return res.json(cached);
     }
-
-    // Fetch from database
-    const data = await prisma.customerSpend.findMany({
-      orderBy: { totalSpend: 'desc' }
+    
+    // Cache is empty (should only happen on very first request ever)
+    console.log('⚠️ Cache is empty - this should only happen on first server start');
+    console.log('💡 Please wait for the next scheduled refresh at 6 AM EST');
+    
+    return res.status(503).json({ 
+      error: 'Data not yet available. Please check back after 6 AM EST.',
+      message: 'Cache is being populated by scheduled job.'
     });
-
-    // Cache the result
-    cache.set('customer-spend', data);
-    console.log('💾 Cached customer-spend data');
-
-    res.json(data);
   } catch (error) {
+    console.error('❌ Error fetching customer spend:', error);
     res.status(500).json({ error: error.message });
   }
 };
 
-// GET /api/leasing/summary
+// POST /api/admin/refresh-cache
+// Protected endpoint for manual cache refresh (called by Render Cron Job)
+export const refreshCache = async (req, res) => {
+  try {
+    // Check for authorization token
+    const authHeader = req.headers.authorization;
+    const expectedToken = process.env.REFRESH_TOKEN || 'default-secret-change-in-production';
+    
+    if (!authHeader || authHeader !== `Bearer ${expectedToken}`) {
+      console.warn('⚠️ Unauthorized refresh attempt');
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    console.log('🔐 Authorized refresh request received');
+    
+    // Trigger data refresh
+    const result = await refreshCustomerSpendData();
+    
+    res.json(result);
+  } catch (error) {
+    console.error('❌ Error in refresh endpoint:', error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
+  }
+};
+
+// GET /api/leasing/summary (placeholder for future)
 export const getSummary = async (req, res) => {
-  try {
-    const cached = cache.get('summary');
-    if (cached) {
-      console.log('📦 Serving from cache: summary');
-      return res.json(cached);
-    }
-
-    const data = await prisma.dailySummary.findMany({
-      orderBy: { date: 'desc' },
-      take: 30 // Last 30 days
-    });
-
-    cache.set('summary', data);
-    console.log('💾 Cached summary data');
-
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  res.json({ message: 'Summary API - Coming Soon' });
 };
 
-// GET /api/leasing/stats
+// GET /api/leasing/stats (placeholder for future)
 export const getStats = async (req, res) => {
-  try {
-    const cached = cache.get('stats');
-    if (cached) {
-      console.log('📦 Serving from cache: stats');
-      return res.json(cached);
-    }
-
-    // Calculate some basic stats
-    const totalCustomers = await prisma.customerSpend.count();
-    const totalSpend = await prisma.customerSpend.aggregate({
-      _sum: { totalSpend: true }
-    });
-
-    const stats = {
-      totalCustomers,
-      totalSpend: totalSpend._sum.totalSpend || 0,
-      timestamp: new Date().toISOString()
-    };
-
-    cache.set('stats', stats);
-    console.log('💾 Cached stats data');
-
-    res.json(stats);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  res.json({ message: 'Stats API - Coming Soon' });
 };
 
