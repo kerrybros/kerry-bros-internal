@@ -65,6 +65,9 @@ export const refreshCustomerSpendData = async () => {
       select: {
         customer: true,
         unit: true,
+        order: true,
+        invoice_date: true,
+        service_description: true,
         total: true
       }
     });
@@ -105,10 +108,42 @@ export const refreshCustomerSpendData = async () => {
       if (!customer.units.has(unitNumber)) {
         customer.units.set(unitNumber, {
           unitNumber,
-          spent: 0
+          spent: 0,
+          orders: new Map()
         });
       }
-      customer.units.get(unitNumber).spent += amount;
+      
+      const unit = customer.units.get(unitNumber);
+      unit.spent += amount;
+
+      // Aggregate by order within unit
+      const orderNumber = record.order?.trim() || 'Unknown';
+      if (!unit.orders.has(orderNumber)) {
+        unit.orders.set(orderNumber, {
+          orderNumber,
+          invoiceDate: record.invoice_date,
+          total: 0,
+          services: []
+        });
+      }
+
+      const order = unit.orders.get(orderNumber);
+      order.total += amount;
+
+      // Add or aggregate service line items by description
+      const serviceDescription = record.service_description?.trim() || 'No description';
+      const existingService = order.services.find(s => s.description === serviceDescription);
+      
+      if (existingService) {
+        // Service already exists, add to its amount
+        existingService.amount += amount;
+      } else {
+        // New service, add it
+        order.services.push({
+          description: serviceDescription,
+          amount: amount
+        });
+      }
     }
 
     // Format response
@@ -122,9 +157,20 @@ export const refreshCustomerSpendData = async () => {
         units: Array.from(customer.units.values())
           .map(unit => ({
             unitNumber: unit.unitNumber,
-            spent: parseFloat(unit.spent.toFixed(2))
+            spent: parseFloat(unit.spent.toFixed(2)),
+            orders: Array.from(unit.orders.values())
+              .map(order => ({
+                orderNumber: order.orderNumber,
+                invoiceDate: order.invoiceDate,
+                total: parseFloat(order.total.toFixed(2)),
+                services: order.services.map(service => ({
+                  description: service.description,
+                  amount: parseFloat(service.amount.toFixed(2))
+                })).sort((a, b) => b.amount - a.amount) // Sort services by amount, descending
+              }))
+              .sort((a, b) => b.total - a.total) // Sort orders by total, descending
           }))
-          .sort((a, b) => b.spent - a.spent) // Sort by spend, descending
+          .sort((a, b) => b.spent - a.spent) // Sort units by spend, descending
       })),
       lastUpdated: new Date().toISOString(),
       monthRange: {
