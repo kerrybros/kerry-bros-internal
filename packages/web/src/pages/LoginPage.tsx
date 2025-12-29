@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const ACCESS_CODE = 'KERRY2025'; // Hardcoded access code
+const ACCESS_CODE = 'test'; // Hardcoded access code
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -23,20 +23,17 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow-lg">
+      <div className="max-w-md w-full space-y-6 pt-4 px-10 pb-10 bg-white rounded-xl shadow-lg">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <div className="flex justify-center">
+            <img src="/KL Logo.png" alt="Kerry Leasing" className="h-64 w-auto" />
+          </div>
+          <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900">
             Kerry Bros Internal
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your access code to continue
-          </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="access-code" className="sr-only">
-              Access Code
-            </label>
             <input
               id="access-code"
               name="code"

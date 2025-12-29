@@ -6,11 +6,13 @@ import { useState, useEffect } from 'react';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Check if user is already logged in (stored in localStorage)
   useEffect(() => {
     const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
     setIsAuthenticated(loggedIn);
+    setIsLoading(false);
   }, []);
 
   const handleLogin = () => {
@@ -22,6 +24,11 @@ function App() {
     localStorage.removeItem('isLoggedIn');
     setIsAuthenticated(false);
   };
+
+  // Show nothing while checking auth status
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <BrowserRouter>

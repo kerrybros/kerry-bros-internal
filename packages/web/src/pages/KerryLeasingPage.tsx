@@ -1,15 +1,66 @@
-import { useData } from '../hooks/useData';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-interface CustomerSpend {
+// Mock data - structured exactly as API will return
+const mockCustomers = [
+  {
+    id: '1',
+    customerName: 'Wolverine Packing KL',
+    logoUrl: '/Wolverine Logo.jpg',
+    currentSpend: 85420.50,
+    fixedCost: 129676.00,
+    units: [
+      { unitNumber: 'Unit 101', spent: 32200.00 },
+      { unitNumber: 'Unit 102', spent: 28150.50 },
+      { unitNumber: 'Unit 103', spent: 25070.00 }
+    ]
+  },
+  {
+    id: '2',
+    customerName: 'Quality Meats KL',
+    logoUrl: '/Quality Meats Logo.png',
+    currentSpend: 1250.25,
+    fixedCost: 18111.00,
+    units: [
+      { unitNumber: 'Unit 201', spent: 650.25 },
+      { unitNumber: 'Unit 202', spent: 600.00 }
+    ]
+  },
+  {
+    id: '3',
+    customerName: 'Royal Banana KL',
+    logoUrl: '/Royal Banana Logo.png',
+    currentSpend: 8100.00,
+    fixedCost: 12939.00,
+    units: [
+      { unitNumber: 'Unit 301', spent: 3500.00 },
+      { unitNumber: 'Unit 302', spent: 2800.00 },
+      { unitNumber: 'Unit 303', spent: 1800.00 }
+    ]
+  }
+];
+
+interface Unit {
+  unitNumber: string;
+  spent: number;
+}
+
+interface Customer {
   id: string;
   customerName: string;
-  customerId: string;
-  totalSpend: number;
-  lastUpdated: string;
+  logoUrl: string;
+  currentSpend: number;
+  fixedCost: number;
+  units: Unit[];
 }
 
 export default function KerryLeasingPage() {
-  const { data: customers, loading, error, refetch } = useData<CustomerSpend[]>('/leasing/customer-spend');
+  const navigate = useNavigate();
+  const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
+  const [lastUpdated] = useState<Date>(new Date()); // In real app, this comes from API
+  
+  // TODO: Replace with actual API call
+  const customers: Customer[] = mockCustomers;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -18,14 +69,37 @@ export default function KerryLeasingPage() {
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const formatLastUpdated = (date: Date) => {
+    const today = new Date();
+    const isToday = date.toDateString() === today.toDateString();
+    const timeStr = date.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    
+    if (isToday) {
+      return `Today at ${timeStr}`;
+    }
+    
+    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return `${dateStr} at ${timeStr}`;
+  };
+
+  const calculateRemaining = (current: number, fixed: number) => {
+    return fixed - current;
+  };
+
+  const getStatusColor = (current: number, fixed: number) => {
+    const remaining = fixed - current;
+    
+    // Over budget (negative remaining)
+    if (remaining < 0) return 'text-red-600';
+    
+    // Under budget - check percentage
+    const percentage = (current / fixed) * 100;
+    if (percentage >= 90) return 'text-yellow-600';
+    return 'text-green-600';
+  };
+
+  const toggleCustomer = (customerId: string) => {
+    setExpandedCustomer(expandedCustomer === customerId ? null : customerId);
   };
 
   return (
@@ -34,17 +108,15 @@ export default function KerryLeasingPage() {
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
-            <div>
+            <div className="flex items-center gap-2">
+              <img src="/KB Logo.png" alt="Kerry Bros" className="h-24 w-auto" />
               <h1 className="text-3xl font-bold text-gray-900">Kerry Leasing Customer Spend</h1>
-              <p className="mt-1 text-sm text-gray-600">
-                Real-time customer spending analysis and metrics
-              </p>
             </div>
             <button
-              onClick={refetch}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              onClick={() => navigate('/home')}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
             >
-              Refresh Data
+              Home
             </button>
           </div>
         </div>
@@ -52,120 +124,104 @@ export default function KerryLeasingPage() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {loading && (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-            <p className="mt-4 text-gray-600">Loading customer data...</p>
-          </div>
-        )}
+        {/* Month Indicator */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-700">
+            Current Month: {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Last Updated: {formatLastUpdated(lastUpdated)}
+          </p>
+        </div>
 
-        {error && (
-          <div className="rounded-md bg-red-50 p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error loading data</h3>
-                <p className="mt-2 text-sm text-red-700">{error}</p>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Customer Cards */}
+        <div className="space-y-4">
+          {customers.map((customer) => {
+            const remaining = calculateRemaining(customer.currentSpend, customer.fixedCost);
+            const isExpanded = expandedCustomer === customer.id;
+            const isOverBudget = remaining < 0;
+            
+            return (
+              <div key={customer.id} className="bg-white shadow rounded-lg overflow-hidden">
+                {/* Customer Summary */}
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <img src={customer.logoUrl} alt={customer.customerName} className="h-16 w-auto" />
+                      <h3 className="text-xl font-bold text-gray-900">{customer.customerName}</h3>
+                    </div>
+                    <button
+                      onClick={() => toggleCustomer(customer.id)}
+                      className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-md shadow-sm transition-colors"
+                    >
+                      {isExpanded ? 'Hide Units' : 'View Units'}
+                    </button>
+                  </div>
 
-        {!loading && !error && customers && (
-          <>
-            {/* Summary Stats */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-8">
-              <div className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="px-4 py-5 sm:p-6">
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Total Customers
-                  </dt>
-                  <dd className="mt-1 text-3xl font-semibold text-gray-900">
-                    {customers.length}
-                  </dd>
-                </div>
-              </div>
-              <div className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="px-4 py-5 sm:p-6">
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Total Spend
-                  </dt>
-                  <dd className="mt-1 text-3xl font-semibold text-gray-900">
-                    {formatCurrency(customers.reduce((sum, c) => sum + c.totalSpend, 0))}
-                  </dd>
-                </div>
-              </div>
-              <div className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="px-4 py-5 sm:p-6">
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Average Spend
-                  </dt>
-                  <dd className="mt-1 text-3xl font-semibold text-gray-900">
-                    {formatCurrency(
-                      customers.length > 0
-                        ? customers.reduce((sum, c) => sum + c.totalSpend, 0) / customers.length
-                        : 0
-                    )}
-                  </dd>
-                </div>
-              </div>
-            </div>
+                  <div className="grid grid-cols-3 gap-6">
+                    {/* Current Spend */}
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Current Spend (MTD)</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatCurrency(customer.currentSpend)}
+                      </p>
+                    </div>
 
-            {/* Table */}
-            <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-              <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">
-                  Customer Spending Details
-                </h3>
+                    {/* Fixed Cost */}
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Fixed Cost</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatCurrency(customer.fixedCost)}
+                      </p>
+                    </div>
+
+                    {/* Remaining */}
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">
+                        {isOverBudget ? 'Over Budget' : 'Remaining'}
+                      </p>
+                      <p className={`text-2xl font-bold ${getStatusColor(customer.currentSpend, customer.fixedCost)}`}>
+                        {formatCurrency(Math.abs(remaining))}
+                        {isOverBudget && ' over'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="mt-4">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className={`h-2 rounded-full ${isOverBudget ? 'bg-red-600' : 'bg-indigo-600'}`}
+                        style={{ width: `${Math.min((customer.currentSpend / customer.fixedCost) * 100, 100)}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {((customer.currentSpend / customer.fixedCost) * 100).toFixed(1)}% of fixed cost
+                    </p>
+                  </div>
+                </div>
+
+                {/* Unit Breakdown (Expandable) */}
+                {isExpanded && (
+                  <div className="border-t border-gray-200 bg-gray-50 p-6">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Unit Breakdown</h4>
+                    <div className="space-y-2">
+                      {customer.units.map((unit, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center bg-white p-3 rounded border border-gray-200"
+                        >
+                          <span className="font-medium text-gray-900">{unit.unitNumber}</span>
+                          <span className="font-semibold text-gray-700">{formatCurrency(unit.spent)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Customer Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Customer ID
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Total Spend
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Last Updated
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {customers.length > 0 ? (
-                      customers.map((customer) => (
-                        <tr key={customer.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {customer.customerName}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {customer.customerId}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
-                            {formatCurrency(customer.totalSpend)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatDate(customer.lastUpdated)}
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={4} className="px-6 py-12 text-center text-sm text-gray-500">
-                          No customer data available
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </>
-        )}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

@@ -1,19 +1,51 @@
+import { useEffect, useCallback } from 'react';
+
 interface HomePageProps {
   onLogout: () => void;
 }
 
 export default function HomePage({ onLogout }: HomePageProps) {
+  // 30-minute timeout with activity reset
+  useEffect(() => {
+    let timeoutId: number;
+
+    const resetTimeout = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => {
+        onLogout();
+      }, 30 * 60 * 1000); // 30 minutes
+    };
+
+    // Set initial timeout
+    resetTimeout();
+
+    // Reset timeout on user activity
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(event => {
+      document.addEventListener(event, resetTimeout);
+    });
+
+    // Cleanup
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      events.forEach(event => {
+        document.removeEventListener(event, resetTimeout);
+      });
+    };
+  }, [onLogout]);
+
   const handleOpenPage = (path: string) => {
-    // Open in new tab
-    window.open(path, '_blank');
+    // Open in new tab with full URL
+    const fullUrl = window.location.origin + path;
+    window.open(fullUrl, '_blank');
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Kerry Bros Internal Dashboard</h1>
+      <div className="bg-white shadow overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center leading-none">
+          <img src="/KL Logo.png" alt="Kerry Leasing" className="h-48 w-auto block -my-4" />
           <button
             onClick={onLogout}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
@@ -35,30 +67,21 @@ export default function HomePage({ onLogout }: HomePageProps) {
         </div>
 
         {/* Cards Grid */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="flex justify-center">
           {/* Kerry Leasing Card */}
           <button
             onClick={() => handleOpenPage('/kerry-leasing')}
-            className="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-shadow duration-300 text-left p-6 border-2 border-transparent hover:border-indigo-500"
+            className="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-shadow duration-300 text-left p-6 border-2 border-transparent hover:border-indigo-500 max-w-md w-full"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 rounded-full bg-indigo-100">
-                <svg
-                  className="h-8 w-8 text-indigo-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                  />
-                </svg>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4 flex-1">
+                <img src="/KB Logo.png" alt="Kerry Bros" className="h-28 w-auto flex-shrink-0" />
+                <h3 className="text-xl font-bold text-gray-900">
+                  Kerry Leasing<br />Customer Spend
+                </h3>
               </div>
               <svg
-                className="h-6 w-6 text-gray-400"
+                className="h-6 w-6 text-gray-400 flex-shrink-0"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -71,52 +94,7 @@ export default function HomePage({ onLogout }: HomePageProps) {
                 />
               </svg>
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              Kerry Leasing Customer Spend
-            </h3>
-            <p className="text-gray-600 text-sm">
-              View detailed customer spending analysis and leasing metrics
-            </p>
           </button>
-
-          {/* Placeholder for future cards */}
-          <div className="bg-gray-100 overflow-hidden shadow rounded-lg p-6 border-2 border-dashed border-gray-300">
-            <div className="text-center text-gray-400">
-              <svg
-                className="mx-auto h-12 w-12 mb-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              <p className="text-sm font-medium">More reports coming soon</p>
-            </div>
-          </div>
-
-          <div className="bg-gray-100 overflow-hidden shadow rounded-lg p-6 border-2 border-dashed border-gray-300">
-            <div className="text-center text-gray-400">
-              <svg
-                className="mx-auto h-12 w-12 mb-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              <p className="text-sm font-medium">More reports coming soon</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
