@@ -1,212 +1,202 @@
-# Kerry Bros Internal Portal
+# Kerry Bros Internal - Lightweight Dashboard
 
-A comprehensive React Next.js application for Kerry Brothers Truck Repair's internal operations, featuring authentication, analytics, work order management, fleet tracking, and more.
+A minimal React + Express + Prisma application for internal reporting and analytics.
 
-## 🚛 Features
+## Tech Stack
 
-### Authentication & Security
-- **Microsoft OAuth Integration** via Clerk
-- Role-based access control (Admin, Manager, Service Advisor, Technician, Parts Clerk)
-- Secure session management
+### Frontend (`packages/web/`)
+- **React 19** with TypeScript
+- **Vite** - Fast build tool
+- **React Router** - Client-side routing
+- **Tailwind CSS** - Utility-first styling
+- Simple access code authentication (frontend only)
 
-### Dashboard & Analytics
-- **Real-time Analytics** with interactive charts
-- Revenue tracking and performance metrics
-- Team efficiency monitoring
-- Work order progress visualization
+### Backend (`packages/server/`)
+- **Node.js** with Express.js
+- **Prisma ORM** - Type-safe database access
+- **PostgreSQL** - Relational database
+- **20-hour caching** - Minimal API calls
+- JavaScript ES modules
 
-### Work Order Management
-- Create, assign, and track service requests
-- Priority-based workflow
-- Progress tracking with time estimates
-- Technician assignment and status updates
+## Project Structure
 
-### Fleet Management
-- Vehicle registration and tracking
-- Maintenance scheduling
-- Fuel level monitoring
-- Location tracking
-- Service history
+```
+kerrybros-internal/
+├── packages/
+│   ├── web/                    # React frontend
+│   │   ├── src/
+│   │   │   ├── pages/
+│   │   │   │   ├── LoginPage.tsx         # Access code login
+│   │   │   │   ├── HomePage.tsx          # Dashboard hub
+│   │   │   │   └── KerryLeasingPage.tsx  # Customer spend report
+│   │   │   ├── hooks/          # Custom React hooks
+│   │   │   ├── utils/          # Types
+│   │   │   └── App.tsx         # Main app with routing
+│   │   └── package.json
+│   │
+│   └── server/                 # Express backend
+│       ├── src/
+│       │   ├── controllers/    # Business logic
+│       │   │   └── leasingController.js  # 3 GET APIs
+│       │   ├── routes/         # API endpoints
+│       │   ├── cache.js        # 20-hour cache
+│       │   ├── prisma.js       # Prisma client
+│       │   └── index.js        # Server entry
+│       └── prisma/
+│           └── schema.prisma   # Database schema
+│
+└── package.json                # Root workspace config
+```
 
-### Team Management
-- Technician performance metrics
-- Skill specialization tracking
-- Workload distribution
-- Real-time status monitoring
-
-### Additional Features
-- **Inventory Management** (parts tracking, stock levels)
-- **Scheduling System** (maintenance appointments)
-- **Reporting Tools** (performance reports, analytics)
-- **Real-time Notifications**
-- **Mobile-responsive Design**
-- **Smooth Animations** with Framer Motion
-
-## 🛠 Tech Stack
-
-- **Frontend**: Next.js 14, React 18, TypeScript
-- **Styling**: Tailwind CSS with custom truck shop theme
-- **Authentication**: Clerk (Microsoft OAuth)
-- **Database**: PostgreSQL with Prisma ORM
-- **Charts**: Chart.js with React Chart.js 2
-- **Animations**: Framer Motion
-- **Icons**: Lucide React
-- **Deployment**: Vercel-ready
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
-- PostgreSQL database (Render or local)
-- Clerk account for authentication
+
+- Node.js 18+ and npm
+- PostgreSQL database
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd kerrybros-internal
-   ```
+1. **Install dependencies**
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp env.example .env.local
-   ```
-   
-   Fill in your environment variables:
-   ```env
-   # Clerk Authentication
-   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-   CLERK_SECRET_KEY=sk_test_...
-   NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-   NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-   NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
-   NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
-
-   # Database
-   DATABASE_URL=postgresql://username:password@host:port/database
-
-   # App Configuration
-   NEXT_PUBLIC_APP_URL=http://localhost:3000
-   ```
-
-4. **Set up the database**
-   ```bash
-   npx prisma generate
-   npx prisma db push
-   ```
-
-5. **Run the development server**
-   ```bash
-   npm run dev
-   ```
-
-6. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000)
-
-## 🔧 Configuration
-
-### Clerk Setup
-1. Create a Clerk application at [clerk.com](https://clerk.com)
-2. Configure Microsoft OAuth provider
-3. Set up your redirect URLs
-4. Copy your API keys to `.env.local`
-
-### Database Setup (Render)
-1. Create a PostgreSQL database on Render
-2. Copy the connection string to `DATABASE_URL`
-3. Run Prisma migrations
-
-### Customization
-- **Colors**: Edit `tailwind.config.js` for custom truck shop colors
-- **Branding**: Update logos and company info in components
-- **Features**: Add/remove features based on your needs
-
-## 📱 User Roles & Permissions
-
-- **Admin**: Full system access, user management
-- **Manager**: Analytics, reporting, team oversight
-- **Service Advisor**: Work orders, customer interaction
-- **Technician**: Assigned work orders, time tracking
-- **Parts Clerk**: Inventory management, parts ordering
-
-## 🎨 Design System
-
-### Color Palette
-- **Primary Orange**: `#FF6B35` (Kerry Bros Orange)
-- **Primary Blue**: `#004E89` (Kerry Bros Blue)
-- **Success Green**: `#10B981`
-- **Warning Yellow**: `#F59E0B`
-- **Error Red**: `#EF4444`
-
-### Components
-- Consistent spacing and typography
-- Smooth animations and transitions
-- Mobile-first responsive design
-- Accessible color contrasts
-
-## 📊 Database Schema
-
-### Core Models
-- **Users**: Employee information and roles
-- **Vehicles**: Fleet management data
-- **Work Orders**: Service requests and tracking
-- **Parts**: Inventory management
-
-### Relationships
-- Users can create and be assigned work orders
-- Vehicles have multiple work orders
-- Work orders track parts usage
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-1. Connect your GitHub repository to Vercel
-2. Set environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
-
-### Manual Deployment
 ```bash
-npm run build
-npm start
+npm install
 ```
 
-## 🔒 Security Features
+2. **Set up the database**
 
-- **Authentication**: Microsoft OAuth via Clerk
-- **Authorization**: Role-based access control
-- **Data Protection**: Encrypted connections, secure sessions
-- **Input Validation**: Prisma schema validation
-- **CORS**: Configured for production domains
+```bash
+cd packages/server
+```
 
-## 📈 Performance
+Create a `.env` file:
 
-- **Server-Side Rendering**: Next.js SSR for fast initial loads
-- **Code Splitting**: Automatic route-based splitting
-- **Image Optimization**: Next.js Image component
-- **Caching**: Built-in Next.js caching strategies
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/kerrybros?schema=public"
+PORT=3001
+NODE_ENV=development
+```
 
-## 🤝 Contributing
+3. **Run Prisma migrations**
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+```bash
+cd ../..
+npm run prisma:generate
+npm run prisma:migrate
+```
 
-## 📞 Support
+### Development
 
-For technical support or feature requests, contact the development team.
+**Run both frontend and backend:**
 
-## 📄 License
+```bash
+npm run dev
+```
 
-This project is proprietary to Kerry Brothers Truck Repair.
+- **Frontend**: http://localhost:3000
+- **Backend**: http://localhost:3001
+- **Access Code**: `KERRY2025` (hardcoded in frontend)
 
----
+## Features
 
-**Built with ❤️ for Kerry Brothers Truck Repair**
+### 🔐 Simple Authentication
+- Access code login (frontend validation only)
+- Session stored in localStorage
+- No complex user management
+
+### 📊 Dashboard
+- Clean home page with report cards
+- Click to open reports in new tabs
+- Currently available: **Kerry Leasing Customer Spend**
+
+### ⚡ Lightweight Backend
+- 3 simple GET APIs
+- 20-hour data caching
+- Minimal database queries
+- Fully automated updates
+
+## API Endpoints
+
+All endpoints are prefixed with `/api/leasing`:
+
+- `GET /api/leasing/customer-spend` - Customer spending details
+- `GET /api/leasing/summary` - Daily summary (last 30 days)
+- `GET /api/leasing/stats` - Quick statistics
+
+## Database Models
+
+### CustomerSpend
+```prisma
+model CustomerSpend {
+  id           String   @id @default(cuid())
+  customerName String
+  customerId   String   @unique
+  totalSpend   Float
+  lastUpdated  DateTime @default(now())
+  createdAt    DateTime @default(now())
+}
+```
+
+### DailySummary
+```prisma
+model DailySummary {
+  id          String   @id @default(cuid())
+  date        DateTime @unique
+  totalRevenue Float
+  recordCount Int
+  createdAt   DateTime @default(now())
+}
+```
+
+## Cache Behavior
+
+- **Cache Duration**: 20 hours
+- **Automatic**: Data is cached on first request
+- **Refresh**: Click "Refresh Data" button on any page
+- **Console Logs**: See cache hits in server console
+
+## Adding New Reports
+
+1. **Backend**: Add a new controller function in `packages/server/src/controllers/leasingController.js`
+2. **Backend**: Add route in `packages/server/src/routes/leasingRoutes.js`
+3. **Frontend**: Create a new page in `packages/web/src/pages/`
+4. **Frontend**: Add route in `packages/web/src/App.tsx`
+5. **Frontend**: Add card in `HomePage.tsx`
+
+## Available Scripts
+
+From the root:
+
+- `npm run dev` - Start both frontend and backend
+- `npm run dev:web` - Start frontend only
+- `npm run dev:server` - Start backend only
+- `npm run build` - Build both packages
+- `npm run prisma:generate` - Generate Prisma client
+- `npm run prisma:migrate` - Run database migrations
+- `npm run prisma:studio` - Open Prisma Studio (database GUI)
+
+## Environment Variables
+
+### Backend (packages/server/.env)
+```env
+DATABASE_URL="postgresql://..."
+PORT=3001
+NODE_ENV=development
+```
+
+### Frontend
+Access code is hardcoded in `LoginPage.tsx` (change `ACCESS_CODE` constant)
+
+## Production Deployment
+
+```bash
+npm run build
+```
+
+- Frontend build: `packages/web/dist`
+- Serve frontend with any static host (Vercel, Netlify, etc.)
+- Deploy backend to any Node.js host (Railway, Render, etc.)
+
+## License
+
+Private - Kerry Brothers Truck Repair
