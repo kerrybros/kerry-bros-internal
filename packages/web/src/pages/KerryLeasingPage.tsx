@@ -1,9 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+interface Service {
+  description: string;
+  amount: number;
+}
+
+interface Order {
+  orderNumber: string;
+  invoiceDate: string | null;
+  total: number;
+  services: Service[];
+}
+
 interface Unit {
   unitNumber: string;
   spent: number;
+  orders: Order[];
 }
 
 interface Customer {
@@ -37,6 +50,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 export default function KerryLeasingPage() {
   const navigate = useNavigate();
   const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
+  const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
+  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,6 +136,40 @@ export default function KerryLeasingPage() {
 
   const toggleCustomer = (customerId: string) => {
     setExpandedCustomer(expandedCustomer === customerId ? null : customerId);
+  };
+
+  const toggleUnit = (customerId: string, unitNumber: string) => {
+    const key = `${customerId}-${unitNumber}`;
+    setExpandedUnits(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const toggleOrder = (customerId: string, unitNumber: string, orderNumber: string) => {
+    const key = `${customerId}-${unitNumber}-${orderNumber}`;
+    setExpandedOrders(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const isUnitExpanded = (customerId: string, unitNumber: string) => {
+    return expandedUnits.has(`${customerId}-${unitNumber}`);
+  };
+
+  const isOrderExpanded = (customerId: string, unitNumber: string, orderNumber: string) => {
+    return expandedOrders.has(`${customerId}-${unitNumber}-${orderNumber}`);
   };
 
   return (
@@ -252,13 +301,79 @@ export default function KerryLeasingPage() {
                   <div className="border-t border-gray-200 bg-gray-50 p-6">
                     <h4 className="text-sm font-semibold text-gray-700 mb-3">Unit Breakdown</h4>
                     <div className="space-y-2">
-                      {customer.units.map((unit, index) => (
-                        <div
-                          key={index}
-                          className="flex justify-between items-center bg-white p-3 rounded border border-gray-200"
-                        >
-                          <span className="font-medium text-gray-900">{unit.unitNumber}</span>
-                          <span className="font-semibold text-gray-700">{formatCurrency(unit.spent)}</span>
+                      {customer.units.map((unit, unitIndex) => (
+                        <div key={unitIndex} className="bg-white rounded border border-gray-200">
+                          {/* Unit Header - Clickable */}
+                          <button
+                            onClick={() => toggleUnit(customer.id, unit.unitNumber)}
+                            className="w-full flex justify-between items-center p-3 hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex items-center gap-2">
+                              <svg
+                                className={`w-4 h-4 transition-transform ${isUnitExpanded(customer.id, unit.unitNumber) ? 'rotate-90' : ''}`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                              </svg>
+                              <span className="font-medium text-gray-900">{unit.unitNumber}</span>
+                            </div>
+                            <span className="font-semibold text-gray-700">{formatCurrency(unit.spent)}</span>
+                          </button>
+
+                          {/* Orders List - Expandable */}
+                          {isUnitExpanded(customer.id, unit.unitNumber) && (
+                            <div className="border-t border-gray-200 bg-gray-50 p-3 space-y-2">
+                              {unit.orders.map((order, orderIndex) => (
+                                <div key={orderIndex} className="bg-white rounded border border-gray-200">
+                                  {/* Order Header - Clickable */}
+                                  <button
+                                    onClick={() => toggleOrder(customer.id, unit.unitNumber, order.orderNumber)}
+                                    className="w-full flex justify-between items-center p-3 hover:bg-gray-50 transition-colors"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <svg
+                                        className={`w-4 h-4 transition-transform ${isOrderExpanded(customer.id, unit.unitNumber, order.orderNumber) ? 'rotate-90' : ''}`}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                                      </svg>
+                                      <div className="text-left">
+                                        <span className="font-medium text-gray-900">Order #{order.orderNumber}</span>
+                                        {order.invoiceDate && (
+                                          <span className="text-xs text-gray-500 ml-2">
+                                            {new Date(order.invoiceDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <span className="font-semibold text-gray-700">{formatCurrency(order.total)}</span>
+                                  </button>
+
+                                  {/* Services List - Expandable */}
+                                  {isOrderExpanded(customer.id, unit.unitNumber, order.orderNumber) && (
+                                    <div className="border-t border-gray-200 bg-gray-50 p-3">
+                                      <h5 className="text-xs font-semibold text-gray-600 mb-2 uppercase">Services</h5>
+                                      <div className="space-y-1">
+                                        {order.services.map((service, serviceIndex) => (
+                                          <div
+                                            key={serviceIndex}
+                                            className="flex justify-between items-start text-sm py-1 px-2 bg-white rounded"
+                                          >
+                                            <span className="text-gray-700 flex-1">{service.description}</span>
+                                            <span className="font-medium text-gray-900 ml-3">{formatCurrency(service.amount)}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
