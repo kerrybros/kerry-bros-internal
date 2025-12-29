@@ -70,6 +70,9 @@ const LOGO_MAP: { [key: string]: string } = {
   'Royal Banana KL': '/Royal Banana Logo.png'
 };
 
+// API base URL from environment variable (empty string for local dev with proxy)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
 export default function KerryLeasingPage() {
   const navigate = useNavigate();
   const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
@@ -80,7 +83,7 @@ export default function KerryLeasingPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/api/leasing/customer-spend');
+        const response = await fetch(`${API_BASE_URL}/api/leasing/customer-spend`);
         const data: ApiResponse = await response.json();
         
         // Map logo URLs to correct paths
