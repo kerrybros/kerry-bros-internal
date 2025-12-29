@@ -4,9 +4,4 @@ dist
 *.log
 .env
 .env.local
-
-# Keep existing files temporarily
-src/
-prisma/
-EXTRACTION_PACKAGE/
-public/
+.next

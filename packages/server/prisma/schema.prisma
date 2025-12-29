@@ -1,0 +1,33 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Simple leasing customer spend tracking
+model CustomerSpend {
+  id           String   @id @default(cuid())
+  customerName String
+  customerId   String   @unique
+  totalSpend   Float
+  lastUpdated  DateTime @default(now())
+  createdAt    DateTime @default(now())
+  
+  @@map("customer_spend")
+}
+
+// Example: You can add more models as needed for your other 2 APIs
+model DailySummary {
+  id          String   @id @default(cuid())
+  date        DateTime @unique
+  totalRevenue Float
+  recordCount Int
+  createdAt   DateTime @default(now())
+  
+  @@map("daily_summary")
+}
