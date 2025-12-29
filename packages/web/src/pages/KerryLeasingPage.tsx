@@ -24,45 +24,6 @@ interface ApiResponse {
   };
 }
 
-// Mock data - structured exactly as API will return
-const mockCustomers: Customer[] = [
-  {
-    id: '1',
-    customerName: 'Wolverine Packing KL',
-    logoUrl: '/Wolverine Logo.jpg',
-    currentSpend: 85420.50,
-    fixedCost: 129676.00,
-    units: [
-      { unitNumber: 'Unit 101', spent: 32200.00 },
-      { unitNumber: 'Unit 102', spent: 28150.50 },
-      { unitNumber: 'Unit 103', spent: 25070.00 }
-    ]
-  },
-  {
-    id: '2',
-    customerName: 'Quality Meats KL',
-    logoUrl: '/Quality Meats Logo.png',
-    currentSpend: 1250.25,
-    fixedCost: 18111.00,
-    units: [
-      { unitNumber: 'Unit 201', spent: 650.25 },
-      { unitNumber: 'Unit 202', spent: 600.00 }
-    ]
-  },
-  {
-    id: '3',
-    customerName: 'Royal Banana KL',
-    logoUrl: '/Royal Banana Logo.png',
-    currentSpend: 8100.00,
-    fixedCost: 12939.00,
-    units: [
-      { unitNumber: 'Unit 301', spent: 3500.00 },
-      { unitNumber: 'Unit 302', spent: 2800.00 },
-      { unitNumber: 'Unit 303', spent: 1800.00 }
-    ]
-  }
-];
-
 // Logo mapping (hardcoded for now)
 const LOGO_MAP: { [key: string]: string } = {
   'Wolverine Packing KL': '/Wolverine Logo.jpg',
@@ -79,12 +40,27 @@ export default function KerryLeasingPage() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/leasing/customer-spend`);
+        const apiUrl = `${API_BASE_URL}/api/leasing/customer-spend`;
+        console.log('🔍 Fetching customer data from:', apiUrl);
+        console.log('📝 API_BASE_URL:', API_BASE_URL || '(empty - using proxy)');
+        
+        const response = await fetch(apiUrl);
+        console.log('📡 Response status:', response.status, response.statusText);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ API Error:', errorText);
+          throw new Error(`API returned ${response.status}: ${errorText}`);
+        }
+        
         const data: ApiResponse = await response.json();
+        console.log('✅ Data received:', data);
+        console.log('📊 Customers loaded:', data.customers.length);
         
         // Map logo URLs to correct paths
         const customersWithLogos = data.customers.map(customer => ({
@@ -94,10 +70,11 @@ export default function KerryLeasingPage() {
         
         setCustomers(customersWithLogos);
         setLastUpdated(new Date(data.lastUpdated));
+        setError(null);
       } catch (error) {
-        console.error('Error fetching customer data:', error);
-        // Fallback to mock data on error
-        setCustomers(mockCustomers);
+        console.error('❌ Error fetching customer data:', error);
+        setError(error instanceof Error ? error.message : 'Failed to load data');
+        setCustomers([]);
       } finally {
         setLoading(false);
       }
@@ -181,6 +158,26 @@ export default function KerryLeasingPage() {
         {loading ? (
           <div className="text-center py-12">
             <p className="text-gray-600">Loading customer data...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-2xl mx-auto">
+              <h3 className="text-lg font-semibold text-red-800 mb-2">Failed to Load Data</h3>
+              <p className="text-red-600 mb-4">{error}</p>
+              <p className="text-sm text-gray-600">
+                This usually means the cache hasn't been populated yet. 
+                Please contact your administrator or wait for the next scheduled data refresh.
+              </p>
+            </div>
+          </div>
+        ) : customers.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-2xl mx-auto">
+              <h3 className="text-lg font-semibold text-yellow-800 mb-2">No Data Available</h3>
+              <p className="text-yellow-600">
+                No customer data found. Please check back later.
+              </p>
+            </div>
           </div>
         ) : (
           /* Customer Cards */
@@ -276,4 +273,3 @@ export default function KerryLeasingPage() {
     </div>
   );
 }
-
