@@ -323,7 +323,7 @@ export default function KerryLeasingPage() {
                           </button>
 
                           {/* Orders List - Expandable */}
-                          {isUnitExpanded(customer.id, unit.unitNumber) && (
+                          {isUnitExpanded(customer.id, unit.unitNumber) && unit.orders && (
                             <div className="border-t border-gray-200 bg-gray-50 p-3 space-y-2">
                               {unit.orders.map((order, orderIndex) => (
                                 <div key={orderIndex} className="bg-white rounded border border-gray-200">

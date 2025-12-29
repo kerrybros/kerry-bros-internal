@@ -130,11 +130,18 @@ export const refreshCustomerSpendData = async () => {
       const order = unit.orders.get(orderNumber);
       order.total += amount;
 
-      // Add service line item
-      if (record.service_description || amount !== 0) {
+      // Add or aggregate service line items by description
+      const serviceDescription = record.service_description?.trim() || 'No description';
+      const existingService = order.services.find(s => s.description === serviceDescription);
+      
+      if (existingService) {
+        // Service already exists, add to its amount
+        existingService.amount += amount;
+      } else {
+        // New service, add it
         order.services.push({
-          description: record.service_description?.trim() || 'No description',
-          amount: parseFloat(amount.toFixed(2))
+          description: serviceDescription,
+          amount: amount
         });
       }
     }
@@ -156,7 +163,10 @@ export const refreshCustomerSpendData = async () => {
                 orderNumber: order.orderNumber,
                 invoiceDate: order.invoiceDate,
                 total: parseFloat(order.total.toFixed(2)),
-                services: order.services
+                services: order.services.map(service => ({
+                  description: service.description,
+                  amount: parseFloat(service.amount.toFixed(2))
+                })).sort((a, b) => b.amount - a.amount) // Sort services by amount, descending
               }))
               .sort((a, b) => b.total - a.total) // Sort orders by total, descending
           }))
