@@ -40,7 +40,7 @@ echo ""
 echo "🔄 Step 2: Refreshing cache..."
 
 response=$(curl -s -w "\n%{http_code}" -X POST "$REFRESH_URL" \
-    -H "Authorization: Bearer ${REFRESH_TOKEN}" \
+    -H "Authorization: Bearer ${REFRESH_TOKEN:-kerry-refresh-prod-2024-a8f3d9e2b1c4}" \
     -H "Content-Type: application/json" \
     --connect-timeout 30 \
     --max-time 120)
