@@ -41,6 +41,26 @@ export const refreshCache = async (req, res) => {
 
     console.log('🔐 Authorized refresh request received');
     
+    // Check if cache was recently updated (within last 5 minutes)
+    const cached = cache.get('customer-spend');
+    if (cached && cached.lastUpdated) {
+      const lastUpdate = new Date(cached.lastUpdated);
+      const now = new Date();
+      const minutesSinceUpdate = (now - lastUpdate) / (1000 * 60);
+      
+      if (minutesSinceUpdate < 5) {
+        console.log(`⏭️ Cache was updated ${minutesSinceUpdate.toFixed(1)} minutes ago - skipping refresh to avoid redundant DB hits`);
+        return res.json({
+          success: true,
+          skipped: true,
+          message: 'Cache is already fresh',
+          timestamp: cached.lastUpdated,
+          customersUpdated: cached.customers.length,
+          minutesSinceUpdate: Math.round(minutesSinceUpdate)
+        });
+      }
+    }
+    
     // Trigger data refresh
     const result = await refreshCustomerSpendData();
     

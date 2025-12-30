@@ -17,7 +17,13 @@ app.use(express.json());
 
 // Routes
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
+  const cached = cache.get('customer-spend');
+  res.json({ 
+    status: 'ok', 
+    message: 'Server is running',
+    cacheStatus: cached ? 'populated' : 'empty',
+    lastUpdated: cached ? cached.lastUpdated : null
+  });
 });
 
 app.use('/api/leasing', leasingRoutes);
@@ -36,9 +42,17 @@ app.listen(PORT, async () => {
   // Check if we have persisted data
   const cached = cache.get('customer-spend');
   if (!cached) {
-    console.log('⚠️ No cached data found');
-    console.log('💡 Data will be fetched at next scheduled refresh (6 AM EST via Render Cron)');
-    console.log('💡 Or manually trigger: POST /api/admin/refresh-cache');
+    console.log('⚠️ No cached data found - initializing cache on startup...');
+    console.log('💡 This happens when the server restarts (Render uses ephemeral filesystem)');
+    
+    try {
+      // Initialize cache immediately on startup to ensure data is always available
+      await refreshCustomerSpendData();
+      console.log('✅ Cache initialized successfully on startup');
+    } catch (error) {
+      console.error('❌ Failed to initialize cache on startup:', error.message);
+      console.log('💡 Cache will be populated at next scheduled refresh (6 AM EST via Render Cron)');
+    }
   } else {
     console.log('✅ Cache loaded from disk - ready to serve requests');
     const timestamp = new Date(cached.lastUpdated);

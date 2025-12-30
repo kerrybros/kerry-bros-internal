@@ -197,6 +197,107 @@ npm run build
 - Serve frontend with any static host (Vercel, Netlify, etc.)
 - Deploy backend to any Node.js host (Railway, Render, etc.)
 
+### Render Deployment Notes
+
+**Cache Persistence Issue**: Render uses ephemeral filesystems, meaning the cache file (`packages/server/data/customer-spend.json`) is **wiped on every deployment or restart**. To mitigate this:
+
+1. **Automatic Cache Initialization**: The server now automatically populates the cache on startup if it's empty
+2. **Daily Cron Job**: Set up a Render Cron Job to refresh the cache daily at 6 AM EST
+3. **Health Check**: Use `GET /api/health` to monitor cache status
+
+### Setting Up Render Cron Job
+
+**IMPORTANT**: Render Cron Jobs are rate-limited by Render's infrastructure. If you see "Too Many Requests (429)" errors:
+
+1. **Option A: Use Render Cron Jobs** (Recommended if on paid plan)
+   - Go to Render Dashboard > Your Web Service
+   - Add a Cron Job
+   - Schedule: `0 11 * * *` (6 AM EST = 11 AM UTC)
+   - Command: 
+     ```bash
+     curl -X POST https://YOUR_APP.onrender.com/api/admin/refresh-cache \
+       -H "Authorization: Bearer YOUR_REFRESH_TOKEN" \
+       -H "Content-Type: application/json"
+     ```
+   - Set `REFRESH_TOKEN` environment variable in your Render service
+
+2. **Option B: Use External Cron Service** (Recommended for free tier)
+   - Use [cron-job.org](https://cron-job.org) or [EasyCron](https://www.easycron.com/)
+   - Schedule: Daily at 6:00 AM EST
+   - URL: `https://YOUR_APP.onrender.com/api/admin/refresh-cache`
+   - Method: POST
+   - Headers:
+     - `Authorization: Bearer YOUR_REFRESH_TOKEN`
+     - `Content-Type: application/json`
+
+**Why external is better for free tier**: Render's internal rate limiting can block requests from Render Cron Jobs, but external services are less likely to trigger this.
+
+### Environment Variables for Production
+
+```env
+DATABASE_URL="postgresql://..."
+PORT=3001
+NODE_ENV=production
+REFRESH_TOKEN="your-secure-token-here"  # For cron job authentication
+```
+
+## Troubleshooting
+
+### Issue: "No Data Available" or Empty Cache
+
+**Symptoms**:
+- Webpage shows "No customer data found"
+- API returns 503 or empty data
+- Server logs show "⚠️ Cache is empty"
+
+**Root Cause**: Render's ephemeral filesystem wipes the cache file on every restart/deployment.
+
+**Solutions**:
+1. **Automatic**: The server now automatically populates cache on startup (new in this version)
+2. **Manual**: Call the refresh endpoint manually:
+   ```bash
+   curl -X POST https://YOUR_APP.onrender.com/api/admin/refresh-cache \
+     -H "Authorization: Bearer YOUR_REFRESH_TOKEN" \
+     -H "Content-Type: application/json"
+   ```
+3. **Check Health**: Visit `https://YOUR_APP.onrender.com/api/health` to see cache status
+
+### Issue: Cron Job Returns "Too Many Requests (429)"
+
+**Root Cause**: Render's infrastructure rate limits requests, even from its own cron jobs.
+
+**Solutions**:
+1. **Use External Cron Service**: Switch to cron-job.org or EasyCron (recommended)
+2. **Add Delays**: If using Render Cron, add a small delay before the curl command:
+   ```bash
+   sleep 5 && curl -X POST ...
+   ```
+3. **Reduce Frequency**: Ensure cron runs only once per day
+
+### Issue: Unauthorized (401) on Refresh Endpoint
+
+**Root Cause**: Missing or incorrect `REFRESH_TOKEN` environment variable.
+
+**Solution**: Set the `REFRESH_TOKEN` environment variable in Render dashboard and use the same token in your cron job's Authorization header.
+
+### Monitoring Cache Status
+
+Check if your cache is populated:
+
+```bash
+curl https://YOUR_APP.onrender.com/api/health
+```
+
+Response:
+```json
+{
+  "status": "ok",
+  "message": "Server is running",
+  "cacheStatus": "populated",  // or "empty"
+  "lastUpdated": "2024-12-30T11:00:00.000Z"
+}
+```
+
 ## License
 
 Private - Kerry Brothers Truck Repair
