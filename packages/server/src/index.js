@@ -57,6 +57,20 @@ app.listen(PORT, async () => {
     console.log('✅ Cache loaded from disk - ready to serve requests');
     const timestamp = new Date(cached.lastUpdated);
     console.log(`📅 Last updated: ${timestamp.toLocaleString('en-US', { timeZone: 'America/New_York' })} EST`);
+    
+    // Check if cache is stale (older than 24 hours) and refresh if needed
+    const cacheAge = Date.now() - new Date(cached.lastUpdated).getTime();
+    const hoursOld = cacheAge / (1000 * 60 * 60);
+    
+    if (hoursOld > 24) {
+      console.log(`⚠️ Cache is ${hoursOld.toFixed(1)} hours old - refreshing...`);
+      try {
+        await refreshCustomerSpendData();
+        console.log('✅ Stale cache refreshed successfully');
+      } catch (error) {
+        console.error('❌ Failed to refresh stale cache:', error.message);
+      }
+    }
   }
   
   console.log('💡 Cache updates handled by Render Cron Job (daily at 6:00 AM EST)');
