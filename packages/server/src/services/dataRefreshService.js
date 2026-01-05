@@ -74,9 +74,24 @@ export const refreshCustomerSpendData = async () => {
 
     console.log(`📊 Found ${revenueData.length} revenue records`);
 
-    // Aggregate data by customer
+    // Initialize ALL Kerry Leasing customers with $0 spend
+    // This ensures customers with no revenue still appear in the report
     const customerMap = new Map();
+    
+    for (const customerName of KERRY_LEASING_CUSTOMERS) {
+      customerMap.set(customerName, {
+        id: customerName.toLowerCase().replace(/\s+/g, '-'),
+        customerName: customerName,
+        logoUrl: `/logos/${customerName.toLowerCase().replace(/\s+/g, '-')}.png`,
+        currentSpend: 0,
+        fixedCost: FIXED_COSTS[customerName],
+        units: new Map()
+      });
+    }
+    
+    console.log(`👥 Initialized ${customerMap.size} customers with $0 spend`);
 
+    // Now update with actual revenue data
     for (const record of revenueData) {
       const customerName = record.customer?.trim();
       if (!customerName) continue;
@@ -87,17 +102,6 @@ export const refreshCustomerSpendData = async () => {
       );
 
       if (!matchedCustomer) continue;
-
-      if (!customerMap.has(matchedCustomer)) {
-        customerMap.set(matchedCustomer, {
-          id: matchedCustomer.toLowerCase().replace(/\s+/g, '-'),
-          customerName: matchedCustomer,
-          logoUrl: `/logos/${matchedCustomer.toLowerCase().replace(/\s+/g, '-')}.png`,
-          currentSpend: 0,
-          fixedCost: FIXED_COSTS[matchedCustomer],
-          units: new Map()
-        });
-      }
 
       const customer = customerMap.get(matchedCustomer);
       const amount = parseFloat(record.total) || 0;
