@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface HomePageProps {
@@ -7,35 +6,6 @@ interface HomePageProps {
 
 export default function HomePage({ onLogout }: HomePageProps) {
   const navigate = useNavigate();
-  
-  // 30-minute timeout with activity reset
-  useEffect(() => {
-    let timeoutId: number;
-
-    const resetTimeout = () => {
-      if (timeoutId) clearTimeout(timeoutId);
-      timeoutId = window.setTimeout(() => {
-        onLogout();
-      }, 30 * 60 * 1000); // 30 minutes
-    };
-
-    // Set initial timeout
-    resetTimeout();
-
-    // Reset timeout on user activity
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
-    events.forEach(event => {
-      document.addEventListener(event, resetTimeout);
-    });
-
-    // Cleanup
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-      events.forEach(event => {
-        document.removeEventListener(event, resetTimeout);
-      });
-    };
-  }, [onLogout]);
 
   const handleOpenPage = (path: string) => {
     navigate(path);

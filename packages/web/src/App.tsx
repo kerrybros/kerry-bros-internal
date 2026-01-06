@@ -15,6 +15,38 @@ function App() {
     setIsLoading(false);
   }, []);
 
+  // 30-minute inactivity timeout - applies to all pages
+  useEffect(() => {
+    if (!isAuthenticated) return; // Only run when authenticated
+
+    let timeoutId: number;
+
+    const resetTimeout = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => {
+        console.log('⏰ Session timeout - logging out due to inactivity');
+        handleLogout();
+      }, 30 * 60 * 1000); // 30 minutes
+    };
+
+    // Set initial timeout
+    resetTimeout();
+
+    // Reset timeout on user activity
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(event => {
+      document.addEventListener(event, resetTimeout);
+    });
+
+    // Cleanup
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      events.forEach(event => {
+        document.removeEventListener(event, resetTimeout);
+      });
+    };
+  }, [isAuthenticated]);
+
   const handleLogin = () => {
     localStorage.setItem('isLoggedIn', 'true');
     setIsAuthenticated(true);
