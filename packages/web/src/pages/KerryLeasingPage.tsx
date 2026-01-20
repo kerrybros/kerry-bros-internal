@@ -108,14 +108,24 @@ export default function KerryLeasingPage() {
   const formatLastUpdated = (date: Date) => {
     const today = new Date();
     const isToday = date.toDateString() === today.toDateString();
-    const timeStr = date.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    const timeStr = date.toLocaleString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit', 
+      hour12: true,
+      timeZone: 'America/New_York'
+    });
+    const dateStr = date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric',
+      timeZone: 'America/New_York'
+    });
     
     if (isToday) {
-      return `Today at ${timeStr}`;
+      return `${dateStr} - Today at ${timeStr} EST`;
     }
     
-    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    return `${dateStr} at ${timeStr}`;
+    return `${dateStr} at ${timeStr} EST`;
   };
 
   const calculateRemaining = (current: number, fixed: number) => {
